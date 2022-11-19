@@ -1,3 +1,6 @@
+const mongoose = require("mongoose");
+const User = mongoose.model("User");
+
 exports.login = async (req, res, next) => {
   console.log("login request handler");
   res.json({ success: "OK" });
@@ -5,5 +8,6 @@ exports.login = async (req, res, next) => {
 
 exports.createUser = async (req, res, next) => {
   console("create user handler");
-  res.json({ success: "OK" });
+  const user = await User.create(req.body);
+  next();
 };
