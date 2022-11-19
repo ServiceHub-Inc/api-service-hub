@@ -23,6 +23,9 @@ db.on("open", () => console.log("Success: Database connected successfully"));
 app.use(cors());
 app.use(express.json());
 
+require("./models");
+require("./routes")(app);
+
 // Invoking the server to listen
 app.listen(process.env.DEV_PORT, () => {
   console.log(`Server has started on PORT ${process.env.DEV_PORT}`);
