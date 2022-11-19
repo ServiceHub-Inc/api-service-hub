@@ -1,7 +1,13 @@
+// Import Statements
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 require("dotenv").config();
 
+// Creating an Express server
+const app = express();
+
+// Connecting to the Database
 mongoose.Promise = global.Promise;
 
 mongoose.connect(process.env.MONGO_URI, {
@@ -13,8 +19,11 @@ const db = mongoose.connection;
 db.on("error", () => console.log("Error: Database connection failed!!!"));
 db.on("open", () => console.log("Success: Database connected successfully"));
 
-const app = express();
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-app.listen(3008, () => {
-  console.log("Server has started on PORT 3008");
+// Invoking the server to listen
+app.listen(process.env.DEV_PORT, () => {
+  console.log(`Server has started on PORT ${process.env.DEV_PORT}`);
 });
