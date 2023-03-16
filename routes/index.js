@@ -1,4 +1,4 @@
-const { createUser, login } = require("./handlers");
+const { createUser, login, getUsers, getUser } = require("./handlers");
 
 module.exports = (app) => {
   app.get("/", (req, res, next) => {
@@ -9,4 +9,8 @@ module.exports = (app) => {
   app.post("/login", login);
 
   app.post("/create-user", createUser);
+
+  app.get("/users", getUsers);
+
+  app.get("/:id", getUser);
 };
