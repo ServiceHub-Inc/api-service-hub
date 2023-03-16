@@ -1,4 +1,10 @@
-const { createUser, login, getUsers, getUser } = require("./handlers");
+const {
+  createUser,
+  login,
+  getUsers,
+  getUser,
+  deleteUser,
+} = require("./handlers");
 
 module.exports = (app) => {
   app.get("/", (req, res, next) => {
@@ -12,5 +18,9 @@ module.exports = (app) => {
 
   app.get("/users", getUsers);
 
-  app.get("/:id", getUser);
+  //Get a user
+  app.get("/user/:id", getUser);
+
+  //Delete a user
+  app.delete("/user/:id", deleteUser);
 };

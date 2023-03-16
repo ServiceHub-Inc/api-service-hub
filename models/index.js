@@ -2,26 +2,41 @@ const mongoose = require("mongoose");
 
 const UserSchema = mongoose.Schema(
   {
-    first_name: {
+    firstName: {
       type: String,
       required: [true, "Please enter your first name"],
       trim: true,
     },
-    last_name: {
+    lastName: {
       type: String,
       required: [true, "Please enter your last name"],
       trim: true,
     },
-    user_role: {
+    userRole: {
       type: String,
       required: true,
       enum: ["ADMIN", "STAFF", "AGENT", "CLIENT", "PROVIDER"],
       default: "CLIENT",
     },
+    idType: {
+      type: String,
+      required: true,
+      default: "N/A",
+    },
     email: {
       type: String,
       required: [true, "Please enter a valid email"],
       unique: [true, "Email already exists"],
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: [true, "Please enter your city"],
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: [true, "Please enter your address"],
       trim: true,
     },
     phone: {
