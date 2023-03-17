@@ -48,6 +48,7 @@ const UserSchema = mongoose.Schema(
     image: {
       type: String,
     },
+    imageUrl: { type: String },
     email_verified_at: {
       type: Date,
     },

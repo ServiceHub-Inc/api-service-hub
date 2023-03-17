@@ -7,6 +7,9 @@ require("dotenv").config();
 // Creating an Express server
 const app = express();
 
+// Serve uploaded images
+app.use("/uploads", express.static("public/uploads"));
+
 // Connecting to the Database
 mongoose.Promise = global.Promise;
 

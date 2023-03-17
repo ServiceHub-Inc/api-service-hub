@@ -3,11 +3,9 @@ const User = mongoose.model("User");
 const uuid = require("uuid");
 const multer = require("multer");
 
-//Multer
+//Setting Up Multer MiddleWare
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
+  destination: "./public/uploads/",
   filename: function (req, file, cb) {
     cb(null, uuid.v4() + "-" + file.originalname);
   },
@@ -23,19 +21,26 @@ exports.login = async (req, res, next) => {
 //Creating User
 exports.createUser = async (req, res, next) => {
   console.log("Create user handler");
+
   try {
     upload.single("image")(req, res, async function (err) {
       if (err) {
-        return res.status(400).json({ error: err.message });
+        return res
+          .status(400)
+          .json({ error: err.message, cMsg: "Error creating user" });
       }
+
+      //Assigning file properties
+      const file = req.file;
+      const imageUrl = `uploads/${file.filename}`; // get the path of the uploaded image
 
       const userData = req.body;
       const verificationToken = uuid.v4();
       const rememberToken = uuid.v4();
-
       const user = await User.create({
         ...userData,
-        image: req.file.filename,
+        image: file.filename,
+        imageUrl,
         verification_token: verificationToken,
         remember_token: rememberToken,
       });
