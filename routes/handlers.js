@@ -1,6 +1,18 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const uuid = require("uuid");
+const multer = require("multer");
+
+//Multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, uuid.v4() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
 
 //Login
 exports.login = async (req, res, next) => {
@@ -10,28 +22,32 @@ exports.login = async (req, res, next) => {
 
 //Creating User
 exports.createUser = async (req, res, next) => {
-  console.log("create user handler");
-  // const { firstName, lastName, email, phone, password } = req.body;
-
+  console.log("Create user handler");
   try {
-    const userData = req.body;
-    const verificationToken = uuid.v4(); // generate a unique verification token
-    const rememberToken = uuid.v4(); // generate a unique remember token
-    const user = await User.create({
-      ...userData,
-      verification_token: verificationToken,
-      remember_token: rememberToken,
+    upload.single("image")(req, res, async function (err) {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      const userData = req.body;
+      const verificationToken = uuid.v4();
+      const rememberToken = uuid.v4();
+
+      const user = await User.create({
+        ...userData,
+        image: req.file.filename,
+        verification_token: verificationToken,
+        remember_token: rememberToken,
+      });
+
+      res.status(200).json(user);
     });
-
-    res.status(200).json(user);
-    console.log("successfully submitted");
   } catch (error) {
-    res.status(400).json({ error: error.message });
-    console.log("hmm something happened");
+    next(error);
   }
-
-  next();
 };
+
+//
 
 //Get All Users
 exports.getUsers = async (req, res, next) => {
@@ -56,6 +72,7 @@ exports.getUser = async (req, res, next) => {
   res.status(200).json(user);
 };
 
+//
 //Delete a user
 exports.deleteUser = async (req, res, next) => {
   const { id } = req.params;
