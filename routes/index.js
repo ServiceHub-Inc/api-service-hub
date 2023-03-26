@@ -4,7 +4,8 @@ const {
   getUsers,
   getUser,
   deleteUser,
-} = require("./handlers");
+  updateUser,
+} = require("./users.handlers");
 
 module.exports = (app) => {
   app.get("/", (req, res, next) => {
@@ -20,6 +21,9 @@ module.exports = (app) => {
 
   //Get a user
   app.get("/user/:id", getUser);
+
+  //Update a User
+  app.patch("/user/:id", updateUser);
 
   //Delete a user
   app.delete("/user/:id", deleteUser);
