@@ -75,7 +75,23 @@ exports.getAdmin = async (req, res, next) => {
 	res.status(200).json(admin);
 };
 
-//
+// Change Admin Role
+exports.changeAdminRole = async (req, res) => {
+	console.log("change admin role");
+
+	const { id } = req.params;
+
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(404).json({ error: "No such data:id" });
+	}
+
+	const admin = await Admin.findByIdAndUpdate(id, { role: req.body.role });
+
+	if (admin) {
+		return res.status(200).json(admin);
+	}
+};
+
 //Delete an Admin
 exports.deleteAdmin = async (req, res, next) => {
 	const { id } = req.params;

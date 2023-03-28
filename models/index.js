@@ -15,7 +15,7 @@ const UserSchema = mongoose.Schema(
 		userRole: {
 			type: String,
 			required: true,
-			enum: ["AGENT", "CLIENT", "PROVIDER"],
+			enum: ["CLIENT", "PROVIDER"],
 			default: "CLIENT",
 		},
 		idType: {
@@ -75,6 +75,58 @@ const UserSchema = mongoose.Schema(
 	{ timestamps: true }
 );
 
+UserSchema.pre("save", function (next) {
+	const user = this;
+
+	if (this.isModified("password") || this.isNew) {
+		bcrypt.genSalt(10, function (saltError, salt) {
+			if (saltError) {
+				return next(saltError);
+			} else {
+				bcrypt.hash(user.password, salt, function (hashError, hash) {
+					if (hashError) {
+						return next(hashError);
+					}
+
+					user.password = hash;
+					next();
+				});
+			}
+		});
+	} else {
+		return next();
+	}
+});
+
+UserSchema.methods.changePassword = (password, next) => {
+	const user = this;
+
+	bcrypt.genSalt(10, function (saltError, salt) {
+		if (saltError) {
+			return next(saltError);
+		} else {
+			bcrypt.hash(password, salt, function (hashError, hash) {
+				if (hashError) {
+					return next(hashError);
+				}
+
+				user.password = hash;
+				// user.save();
+				next();
+			});
+		}
+	});
+};
+
+UserSchema.methods.authenticate = async function (candidatePassword, callback) {
+	if (!callback) return bcrypt.compare(candidatePassword, this.password);
+
+	bcrypt.compare(candidatePassword, this.password, function (err, matching) {
+		if (err) return callback(err);
+		return callback(null, matching);
+	});
+};
+
 const AdminSchema = mongoose.Schema(
 	{
 		firstName: {
@@ -123,6 +175,61 @@ const AdminSchema = mongoose.Schema(
 	},
 	{ timestamps: true }
 );
+
+AdminSchema.pre("save", function (next) {
+	const admin = this;
+
+	if (this.isModified("password") || this.isNew) {
+		bcrypt.genSalt(10, function (saltError, salt) {
+			if (saltError) {
+				return next(saltError);
+			} else {
+				bcrypt.hash(admin.password, salt, function (hashError, hash) {
+					if (hashError) {
+						return next(hashError);
+					}
+
+					admin.password = hash;
+					next();
+				});
+			}
+		});
+	} else {
+		return next();
+	}
+});
+
+AdminSchema.methods.changePassword = (password, next) => {
+	const admin = this;
+
+	bcrypt.genSalt(10, function (saltError, salt) {
+		if (saltError) {
+			return next(saltError);
+		} else {
+			bcrypt.hash(password, salt, function (hashError, hash) {
+				if (hashError) {
+					return next(hashError);
+				}
+
+				admin.password = hash;
+				// user.save();
+				next();
+			});
+		}
+	});
+};
+
+AdminSchema.methods.authenticate = async function (
+	candidatePassword,
+	callback
+) {
+	if (!callback) return bcrypt.compare(candidatePassword, this.password);
+
+	bcrypt.compare(candidatePassword, this.password, function (err, matching) {
+		if (err) return callback(err);
+		return callback(null, matching);
+	});
+};
 
 mongoose.model("User", UserSchema);
 mongoose.model("Admin", AdminSchema);
