@@ -48,10 +48,16 @@ exports.createUser = async (req, res, next) => {
         });
       }
 
+      // if (!file) {
+      //   return res.status(400).json({
+      //     error: "Image File does not exist",
+      //   });
+      // }
+
       //Assigning file properties
       const file = req.file;
       const baseUrl = `${req.protocol}://${req.headers.host}`;
-      const imageUrl = `${baseUrl}/uploads/${file.filename}`; // get the path of the uploaded image
+      const imageUrl = `${baseUrl}/uploads/${file?.filename}`; // get the path of the uploaded image
 
       const { email, phone } = req.body;
 
@@ -77,7 +83,7 @@ exports.createUser = async (req, res, next) => {
       const rememberToken = uuid.v4();
       const user = await User.create({
         ...userData,
-        image: file.filename,
+        image: file?.filename,
         imageUrl,
         verification_token: verificationToken,
         remember_token: rememberToken,
