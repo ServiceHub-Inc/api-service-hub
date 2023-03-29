@@ -14,8 +14,32 @@ const upload = multer({ storage: storage });
 
 // Admin Login
 exports.login = async (req, res, next) => {
-	console.log("login request handler");
-	res.json({ success: "OK" });
+	try {
+		const { email, password } = req.body;
+		if (!email || !password) {
+			return Util.error("All fields required", next);
+		}
+
+		const admin = await Admin.findOne({ email });
+		if (!admin) {
+			return res
+				.status(400)
+				.json({ message: "The email or password you entered is incorrect" });
+		}
+
+		const matching = await admin.authenticate(password);
+		if (!matching) {
+			return res
+				.status(400)
+				.json({ message: "The email or password you entered is incorrect" });
+		}
+
+		// req.session.userId = user._id;
+		const { password: pass, ...rest } = admin;
+		return res.status(200).json(rest);
+	} catch (error) {
+		return res.status(error.status || 401).json({ message: error.message });
+	}
 };
 
 //Creating an Admin
@@ -54,9 +78,9 @@ exports.createAdmin = async (req, res, next) => {
 
 //Get All Admins
 exports.getAdmins = async (req, res, next) => {
-	console.log("get users handler");
-	const users = await Admin.find({}).sort({ createdAt: -1 });
-	res.status(200).json(users);
+	console.log("get admin handler");
+	const admin = await Admin.find({}).sort({ createdAt: -1 });
+	res.status(200).json(admin);
 };
 
 //Get a Single Admin
@@ -75,7 +99,23 @@ exports.getAdmin = async (req, res, next) => {
 	res.status(200).json(admin);
 };
 
-//
+// Change Admin Role
+exports.changeAdminRole = async (req, res) => {
+	console.log("change admin role");
+
+	const { id } = req.params;
+
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(404).json({ error: "No such data:id" });
+	}
+
+	const admin = await Admin.findByIdAndUpdate(id, { role: req.body.role });
+
+	if (admin) {
+		return res.status(200).json(admin);
+	}
+};
+
 //Delete an Admin
 exports.deleteAdmin = async (req, res, next) => {
 	const { id } = req.params;
