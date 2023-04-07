@@ -59,6 +59,25 @@ exports.createAdmin = async (req, res, next) => {
       const file = req.file;
       const imageUrl = `uploads/${file?.filename}`; // get the path of the uploaded image
 
+      const { email, phone } = req.body;
+
+      // Checking if email or phone already exists
+      const emailExists = await Admin.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({
+          error: "Email already exists",
+          cMsg: "Error creating admin",
+        });
+      }
+      //Checking if phone exists
+      const phoneExists = await Admin.findOne({ phone });
+      if (phoneExists) {
+        return res.status(400).json({
+          error: "Phone number already exists",
+          cMsg: "Error creating admin",
+        });
+      }
+
       const adminData = req.body;
       const rememberToken = uuid.v4();
       const admin = await Admin.create({
@@ -80,8 +99,8 @@ exports.createAdmin = async (req, res, next) => {
 //Get All Admins
 exports.getAdmins = async (req, res, next) => {
   console.log("get admin handler");
-  const admin = await Admin.find({}).sort({ createdAt: -1 });
-  res.status(200).json(admin);
+  const admins = await Admin.find({}).sort({ createdAt: -1 });
+  res.status(200).json(admins);
 };
 
 //Get a Single Admin
