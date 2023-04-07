@@ -3,6 +3,8 @@ const {
   loginAdmin,
   getAdmins,
   getAdmin,
+  sendMail,
+  ConfirmUser,
 } = require("./admin.handlers");
 const {
   createUser,
@@ -50,4 +52,10 @@ module.exports = (app) => {
 
   //Get an Admin
   app.get("/admin/:id", getAdmin);
+
+  //send Mail
+  app.post("/register", sendMail);
+
+  //Verify
+  app.get("/confirm/:confirmationCode", ConfirmUser);
 };

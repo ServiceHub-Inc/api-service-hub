@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Admin = mongoose.model("Admin");
 const uuid = require("uuid");
 const multer = require("multer");
+const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 //Setting Up Multer MiddleWare
 const storage = multer.diskStorage({
@@ -75,7 +77,73 @@ exports.createAdmin = async (req, res, next) => {
   }
 };
 
-//
+//testing email
+exports.sendMail = async (req, res, next) => {
+  // const { email } = req.body;
+  // const user = new User({ email, confirmed: false });
+  // await user.save();
+
+  console.log("email Sending");
+
+  const email = "ghservicehub@gmail.com";
+  const name = "Frank Thomas";
+  const confirmationCode = uuid.v4();
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  const html = `
+    <html>
+      <head>
+        <style>
+          .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            background-color: #f2f2f2;
+          }
+          .header img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <img src="https://images.unsplash.com/photo-1553835973-dec43bfddbeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTZ8fGxvZ29zfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=600&q=60" alt="Logo">
+          <h1>Email Confirmation</h1>
+        </div>
+        <p>Hello ${name}, this is a test email from ServiceHUB</p>
+        <p>Please confirm your email by clicking on the following link</p>
+        <a href=http://localhost:3008/confirm/${confirmationCode}> Click here</a>
+      </body>
+    </html>
+  `;
+
+  const mailOptions = {
+    from: "ServiceHub <dennisagbokpe@gmail.com>",
+    to: email, // list of receivers
+    subject: "Confirm your registration", // Subject line
+    html, // html body
+  };
+
+  await transporter.sendMail(mailOptions);
+  res.send("Successfully Sent");
+  console.log("email Sent");
+};
+
+//Confirm / Verify user
+exports.ConfirmUser = async (req, res, next) => {
+  console.log("confirming user");
+};
 
 //Get All Admins
 exports.getAdmins = async (req, res, next) => {
