@@ -150,7 +150,7 @@ const AdminSchema = mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["ADMIN", "STAFF", "AGENT"],
+      enum: ["ADMIN", "STAFF"],
       default: "STAFF",
     },
     phone: {
