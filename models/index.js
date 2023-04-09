@@ -147,6 +147,10 @@ const AdminSchema = mongoose.Schema(
       unique: [true, "Email already exists"],
       trim: true,
     },
+    is_email_verified: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       required: true,
