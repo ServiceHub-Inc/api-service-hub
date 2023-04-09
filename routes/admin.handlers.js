@@ -4,7 +4,14 @@ const uuid = require("uuid");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
+//Creating a Token function
+const createToken = (_id) => {
+  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: "3d" });
+};
+
+//
 //Setting Up Multer MiddleWare
 const storage = multer.diskStorage({
   destination: "./public/uploads/",
@@ -37,6 +44,9 @@ exports.loginAdmin = async (req, res, next) => {
         .status(400)
         .json({ message: "The email or password you entered is incorrect" });
     }
+
+    //Add a token
+    const token = createToken(admin._id);
 
     const { password: pass, ...rest } = admin;
     return res.status(200).json(rest);
@@ -81,6 +91,7 @@ exports.createAdmin = async (req, res, next) => {
       }
 
       const adminData = req.body;
+
       const rememberToken = uuid.v4();
       const admin = await Admin.create({
         ...adminData,
@@ -89,7 +100,10 @@ exports.createAdmin = async (req, res, next) => {
         remember_token: rememberToken,
       });
 
-      res.status(200).json(admin);
+      //Add a token
+      const token = createToken(admin._id);
+
+      res.status(200).json({ admin, token });
     });
   } catch (error) {
     next(error);
@@ -203,6 +217,28 @@ exports.changeAdminRole = async (req, res) => {
     return res.status(200).json(admin);
   }
 };
+
+//Update Admin
+exports.updateAdmin = async (req, res, next) => {
+  console.log("update an Admin");
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ error: "No such data:id" });
+  }
+
+  const admin = await Admin.findOneAndUpdate(
+    { _id: id },
+    {
+      ...req.body,
+    },
+  );
+  if (!admin) {
+    return res.status(400).json({ error: "No data Found" });
+  }
+
+  res.status(200).json(admin);
+};
+//
 
 //Delete an Admin
 exports.deleteAdmin = async (req, res, next) => {

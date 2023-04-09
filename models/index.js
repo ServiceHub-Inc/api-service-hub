@@ -153,6 +153,10 @@ const AdminSchema = mongoose.Schema(
       enum: ["ADMIN", "STAFF"],
       default: "STAFF",
     },
+    token: {
+      type: String,
+      unique: [true, "Number already exists"],
+    },
     phone: {
       type: String,
       required: [true, "Please enter your phone number"],

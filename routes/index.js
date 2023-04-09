@@ -5,6 +5,8 @@ const {
   getAdmin,
   sendMail,
   ConfirmUser,
+  deleteAdmin,
+  updateAdmin,
 } = require("./admin.handlers");
 const {
   createUser,
@@ -52,6 +54,12 @@ module.exports = (app) => {
 
   //Get an Admin
   app.get("/admin/:id", getAdmin);
+
+  //Delete an Admin
+  app.delete("/admin/:id", deleteAdmin);
+
+  //Update an Admin
+  app.patch("/admin/:id", updateAdmin);
 
   //send Mail
   app.post("/register", sendMail);
