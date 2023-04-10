@@ -60,6 +60,7 @@ const UserSchema = mongoose.Schema(
     verification_token: {
       type: String,
       unique: [true, "Number already exists"],
+      default: null,
     },
     password: {
       type: String,

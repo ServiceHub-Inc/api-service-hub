@@ -4,9 +4,9 @@ const {
   getAdmins,
   getAdmin,
   sendMail,
-  ConfirmUser,
   deleteAdmin,
   updateAdmin,
+  ConfirmAdmin,
 } = require("./admin.handlers");
 const {
   createUser,
@@ -15,6 +15,9 @@ const {
   getUser,
   deleteUser,
   updateUser,
+  confirmUserEmail,
+  verifySuccess,
+  ejsPage,
 } = require("./users.handlers");
 
 module.exports = (app) => {
@@ -41,6 +44,15 @@ module.exports = (app) => {
   //Delete a User
   app.delete("/user/:id", deleteUser);
 
+  //Confirm User Email
+  app.get("/confirm", confirmUserEmail);
+
+  //Successful Sign UP
+  app.get("/thankyou", verifySuccess);
+
+  //Ejs TestPage
+  app.get("/testing", ejsPage);
+
   // --------------------------------------ADMIN ROUTES-------------------------------//
 
   //Create an Admin
@@ -65,5 +77,5 @@ module.exports = (app) => {
   app.post("/register", sendMail);
 
   //Verify
-  app.get("/confirm/:confirmationCode", ConfirmUser);
+  app.get("/confirm/:confirmationCode", ConfirmAdmin);
 };

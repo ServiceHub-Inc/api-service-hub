@@ -1,8 +1,24 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
-const path = require("path");
 const uuid = require("uuid");
 const multer = require("multer");
+const nodemailer = require("nodemailer");
+const Handlebars = require("handlebars");
+const fs = require("fs");
+const path = require("path");
+const ejs = require("ejs");
+
+const emailTemplatePath = path.join(
+  __dirname,
+  "..",
+  "templates",
+  "confirmation-email.hbs",
+);
+
+//
+const emailTemplate = fs.readFileSync(emailTemplatePath, "utf8");
+
+const compiledEmailTemplate = Handlebars.compile(emailTemplate);
 
 //Login
 exports.login = async (req, res, next) => {
@@ -45,24 +61,6 @@ const upload = multer({ storage: storage });
 
 exports.createUser = async (req, res, next) => {
   console.log("Create user handler");
-  // Check if required fields are present
-  const requiredFields = [
-    "firstName",
-    "lastName",
-    "userRole",
-    "email",
-    "city",
-    "address",
-    "phone",
-    "password",
-  ];
-  // const missingFields = requiredFields.filter((field) => !(field in req.body));
-  // if (missingFields.length > 0) {
-  //   return res
-  //     .status(400)
-  //     .json({ error: `Missing required fields: ${missingFields.join(", ")}` });
-  // }
-
   try {
     upload.single("image")(req, res, async function (err) {
       if (err) {
@@ -71,12 +69,6 @@ exports.createUser = async (req, res, next) => {
           cMsg: "Error creating user",
         });
       }
-
-      // if (!file) {
-      //   return res.status(400).json({
-      //     error: "Image File does not exist",
-      //   });
-      // }
 
       //Assigning file properties
       const file = req.file;
@@ -113,6 +105,31 @@ exports.createUser = async (req, res, next) => {
         remember_token: rememberToken,
       });
 
+      //Emailing the user
+      console.log("email Sending");
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USERNAME,
+          pass: process.env.SMTP_PASSWORD,
+        },
+      });
+
+      const mailOptions = {
+        from: "ServiceHub <dennisagbokpe@gmail.com>",
+        to: email, // list of receivers
+        subject: "Please Confirm Your Email Address", // Subject line
+        html: compiledEmailTemplate({
+          firstName: userData.firstName,
+          confirmUrl: `${baseUrl}/confirm?token=${user.verification_token}`,
+        }), // html body
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log("email Sent");
+
       res.status(200).json(user);
     });
   } catch (error) {
@@ -121,7 +138,50 @@ exports.createUser = async (req, res, next) => {
 };
 
 //
+exports.confirmUserEmail = async (req, res, next) => {
+  console.log("Confirming User");
+  try {
+    const { token } = req.query;
+    const user = await User.findOne({ verification_token: token });
 
+    if (!user) {
+      return res.status(400).json({
+        error: "Invalid token, please contact admin",
+      });
+    }
+
+    user.is_email_verified = true;
+    user.verification_token += " Verified";
+    await user.save();
+
+    // Render the successful activation page using EJS
+    const viewPath = path.join(
+      __dirname,
+      "../views/emailActivationSuccess.ejs",
+    );
+    const html = await ejs.renderFile(viewPath);
+
+    res.status(200).send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+//just testing Ejs Pages
+exports.ejsPage = async (req, res, next) => {
+  console.log("EJS Page Test");
+  const viewPath = path.join(__dirname, "../views/emailActivationSuccess.ejs");
+  const html = await ejs.renderFile(viewPath);
+
+  res.status(200).send(html);
+};
+
+exports.verifySuccess = async (req, res, next) => {
+  console.log("Successful Activation");
+  res.send("Thank you for verifying your email!");
+};
+
+//
 //Get All Users
 exports.getUsers = async (req, res, next) => {
   console.log("get users handler");

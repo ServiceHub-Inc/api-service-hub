@@ -1,0 +1,58 @@
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .message {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .body-text {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #0070f3;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .button:hover {
+            background-color: #0062cc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img src="../public/uploads/54f72d49-47f4-4b6e-9b08-10aedf46e664-logo.webp" alt="Logo" class="logo">
+        <h1 class="message">Confirm your email address</h1>
+        <p class="body-text">Hi {{firstName}},</p>
+        <p class="body-text">Please click the button below to confirm your email address and activate your account.</p>
+        <a href="{{confirmUrl}}" class="button">Confirm Email Address</a>
+    </div>
+</body>
+
+</html>

@@ -174,7 +174,7 @@ exports.sendMail = async (req, res, next) => {
 };
 
 //Confirm / Verify user
-exports.ConfirmUser = async (req, res, next) => {
+exports.ConfirmAdmin = async (req, res, next) => {
   console.log("confirming user");
 };
 
