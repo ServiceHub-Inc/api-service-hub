@@ -7,6 +7,7 @@ const {
   deleteAdmin,
   updateAdmin,
   ConfirmAdmin,
+  refreshToken,
 } = require("./admin.handlers");
 const {
   createUser,
@@ -67,6 +68,8 @@ module.exports = (app) => {
   //login an Admin
   app.post("/admin/login", loginAdmin);
 
+  app.post("/admin/refresh-token", refreshToken);
+
   //---------------PROTECTED REQUESTS--------------------
 
   //Using Auth MiddleWare
@@ -83,9 +86,6 @@ module.exports = (app) => {
 
   //Update an Admin
   app.patch("/admin/:id", updateAdmin);
-
-  //send Mail
-  app.post("/register", sendMail);
 
   //Verify
   app.get("/confirm/:confirmationCode", ConfirmAdmin);

@@ -15,6 +15,8 @@ const emailTemplatePath = path.join(
   "confirmation-email.hbs",
 );
 
+//Delete image function
+
 //
 const emailTemplate = fs.readFileSync(emailTemplatePath, "utf8");
 
@@ -73,7 +75,7 @@ exports.createUser = async (req, res, next) => {
       //Assigning file properties
       const file = req.file;
       const baseUrl = `${req.protocol}://${req.headers.host}`;
-      const imageUrl = `${baseUrl}/uploads/${file?.filename}`; // get the path of the uploaded image
+      file ? (imageUrl = `uploads/${file?.filename}`) : (imageUrl = null); // get the path of the uploaded image
 
       const { email, phone } = req.body;
 
@@ -228,20 +230,43 @@ exports.updateUser = async (req, res, next) => {
   console.log(id);
 };
 //
-//Delete a user
+// Delete a user
 exports.deleteUser = async (req, res, next) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(404).json({ error: "No such data:id" });
   }
 
-  const user = await User.findOneAndDelete({ _id: id });
+  const user = await User.findOne({ _id: id });
   if (!user) {
     return res.status(400).json({ error: "No user Found" });
   }
 
+  // Delete the user's profile image
+  if (user.imageUrl) {
+    const publicPath = path.join(__dirname, "..", "public");
+    const imagePath = path.join(publicPath, user.imageUrl);
+    const fixedImagePath = imagePath.replace(/\\\\/g, "/");
+
+    // Uncomment the following line to delete the image
+    deleteProfileImage(fixedImagePath);
+  }
+
+  // Delete the user from the database
+  await User.deleteOne({ _id: id });
+
   res.status(200).json(user);
 };
+
+function deleteProfileImage(imagePath) {
+  fs.unlink(imagePath, (err) => {
+    if (err) {
+      console.error(`Error deleting image: ${err.message}`);
+    } else {
+      console.log(`Image deleted: ${imagePath}`);
+    }
+  });
+}
 
 //
 exports.resetPassword = async (req, res, next) => {

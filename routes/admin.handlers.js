@@ -5,10 +5,16 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
 
 //Creating a Token function
 const createToken = (_id, expiresIn) => {
   return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn });
+};
+
+const createRefreshToken = (_id) => {
+  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: "3d" }); // Refresh token expiration: 7 days
 };
 
 //
@@ -49,12 +55,13 @@ exports.loginAdmin = async (req, res, next) => {
 
     // Add a token
     const token = createToken(admin._id, expiresIn);
+    const refreshToken = createRefreshToken(admin._id);
 
     // Calculate tokenValidity in milliseconds
     const tokenValidity = Date.now() + expiresIn * 1000;
 
     const { password: pass, ...rest } = admin;
-    return res.status(200).json({ admin, token, tokenValidity });
+    return res.status(200).json({ admin, token, tokenValidity, refreshToken });
   } catch (error) {
     return res.status(error.status || 401).json({ message: error.message });
   }
@@ -62,7 +69,7 @@ exports.loginAdmin = async (req, res, next) => {
 
 //Creating an Admin
 exports.createAdmin = async (req, res, next) => {
-  console.log("Create admin handler");
+  console.log("Creating an Admin");
 
   try {
     upload.single("image")(req, res, async function (err) {
@@ -74,7 +81,8 @@ exports.createAdmin = async (req, res, next) => {
 
       //Assigning file properties
       const file = req.file;
-      const imageUrl = `uploads/${file?.filename}`; // get the path of the uploaded image
+
+      file ? (imageUrl = `uploads/${file?.filename}`) : (imageUrl = null); // get the path of the uploaded image
 
       const { email, phone } = req.body;
 
@@ -110,78 +118,43 @@ exports.createAdmin = async (req, res, next) => {
 
       // Add a token
       const token = createToken(admin._id, expiresIn);
+      const refreshToken = createRefreshToken(admin._id);
 
       // Calculate tokenValidity in milliseconds
       const tokenValidity = Date.now() + expiresIn * 1000;
 
-      res.status(200).json({ admin, token, tokenValidity });
+      res.status(200).json({ admin, token, tokenValidity, refreshToken });
     });
   } catch (error) {
     next(error);
   }
 };
 
-//testing email
-exports.sendMail = async (req, res, next) => {
-  // const { email } = req.body;
-  // const user = new User({ email, confirmed: false });
-  // await user.save();
+//-----------------REFRESH TOKENS-------------------------------------//
+exports.refreshToken = async (req, res, next) => {
+  console.log("Refreshing Tokens");
+  const { refreshToken } = req.body;
 
-  console.log("email Sending");
+  if (!refreshToken) {
+    return res.status(400).json({ error: "Refresh token is required" });
+  }
 
-  const email = "ghservicehub@gmail.com";
-  const name = "Frank Thomas";
-  const confirmationCode = uuid.v4();
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USERNAME,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const admin = await Admin.findById(decoded._id);
 
-  const html = `
-    <html>
-      <head>
-        <style>
-          .header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100px;
-            background-color: #f2f2f2;
-          }
-          .header img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <img src="https://images.unsplash.com/photo-1553835973-dec43bfddbeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTZ8fGxvZ29zfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=600&q=60" alt="Logo">
-          <h1>Email Confirmation</h1>
-        </div>
-        <p>Hello ${name}, this is a test email from ServiceHUB</p>
-        <p>Please confirm your email by clicking on the following link</p>
-        <a href=http://localhost:3008/confirm/${confirmationCode}> Click here</a>
-      </body>
-    </html>
-  `;
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
 
-  const mailOptions = {
-    from: "ServiceHub <dennisagbokpe@gmail.com>",
-    to: email, // list of receivers
-    subject: "Confirm your registration", // Subject line
-    html, // html body
-  };
+    const expiresIn = 3600; // 1 hour
+    const token = createToken(admin._id, expiresIn);
+    const tokenValidity = Date.now() + expiresIn * 1000;
 
-  await transporter.sendMail(mailOptions);
-  res.send("Successfully Sent");
-  console.log("email Sent");
+    res.status(200).json({ token, tokenValidity });
+  } catch (error) {
+    res.status(401).json({ error: "Invalid or expired refresh token" });
+  }
 };
 
 //Confirm / Verify user
@@ -258,10 +231,33 @@ exports.deleteAdmin = async (req, res, next) => {
     return res.status(404).json({ error: "No such data:id" });
   }
 
-  const admin = await Admin.findOneAndDelete({ _id: id });
+  const admin = await Admin.findOne({ _id: id });
   if (!admin) {
-    return res.status(400).json({ error: "Admin Account not found" });
+    return res.status(400).json({ error: "No Admin Account Found" });
   }
+
+  // Delete the user's profile image
+  if (admin.imageUrl) {
+    const publicPath = path.join(__dirname, "..", "public");
+    const imagePath = path.join(publicPath, admin.imageUrl);
+    const fixedImagePath = imagePath.replace(/\\\\/g, "/");
+
+    // Uncomment the following line to delete the image
+    deleteProfileImage(fixedImagePath);
+  }
+
+  // Delete the user from the database
+  await Admin.deleteOne({ _id: id });
 
   res.status(200).json(admin);
 };
+
+function deleteProfileImage(imagePath) {
+  fs.unlink(imagePath, (err) => {
+    if (err) {
+      console.error(`Error deleting image: ${err.message}`);
+    } else {
+      console.log(`Image deleted: ${imagePath}`);
+    }
+  });
+}
