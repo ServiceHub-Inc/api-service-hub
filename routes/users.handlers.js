@@ -242,3 +242,37 @@ exports.deleteUser = async (req, res, next) => {
 
   res.status(200).json(user);
 };
+
+//
+exports.resetPassword = async (req, res, next) => {
+  console.log("Resetting Password");
+  try {
+    // Extract email and new password from request body
+    const { email, password } = req.body;
+
+    // Check if user with email exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Use changePassword method to update user's password
+    user.changePassword(password, (err) => {
+      if (err) {
+        return res.status(500).json({ error: "Password update failed" });
+      }
+
+      //Reset user's reset password token
+
+      //user.reset_password_token = null;
+      user.save();
+
+      // Send password reset confirmation email
+
+      // Return success response
+      return res.status(200).json({ message: "Password reset successful" });
+    });
+  } catch (error) {
+    next(error);
+  }
+};

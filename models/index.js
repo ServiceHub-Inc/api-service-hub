@@ -100,7 +100,7 @@ UserSchema.pre("save", function (next) {
   }
 });
 
-UserSchema.methods.changePassword = (password, next) => {
+UserSchema.methods.changePassword = function (password, next) {
   const user = this;
 
   bcrypt.genSalt(10, function (saltError, salt) {
@@ -113,7 +113,6 @@ UserSchema.methods.changePassword = (password, next) => {
         }
 
         user.password = hash;
-        // user.save();
         next();
       });
     }

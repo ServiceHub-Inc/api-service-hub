@@ -7,8 +7,8 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
 //Creating a Token function
-const createToken = (_id) => {
-  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: "3d" });
+const createToken = (_id, expiresIn) => {
+  return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn });
 };
 
 //
@@ -22,9 +22,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 exports.loginAdmin = async (req, res, next) => {
+  console.log("logging in");
   try {
-    console.log("logging in");
-
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -45,11 +44,17 @@ exports.loginAdmin = async (req, res, next) => {
         .json({ message: "The email or password you entered is incorrect" });
     }
 
-    //Add a token
-    const token = createToken(admin._id);
+    // Token expiration time (in seconds)
+    const expiresIn = 3600; // 1 hour
+
+    // Add a token
+    const token = createToken(admin._id, expiresIn);
+
+    // Calculate tokenValidity in milliseconds
+    const tokenValidity = Date.now() + expiresIn * 1000;
 
     const { password: pass, ...rest } = admin;
-    return res.status(200).json(rest);
+    return res.status(200).json({ admin, token, tokenValidity });
   } catch (error) {
     return res.status(error.status || 401).json({ message: error.message });
   }
@@ -100,10 +105,16 @@ exports.createAdmin = async (req, res, next) => {
         remember_token: rememberToken,
       });
 
-      //Add a token
-      const token = createToken(admin._id);
+      // Token expiration time (in seconds)
+      const expiresIn = 3600; // 1 hour
 
-      res.status(200).json({ admin, token });
+      // Add a token
+      const token = createToken(admin._id, expiresIn);
+
+      // Calculate tokenValidity in milliseconds
+      const tokenValidity = Date.now() + expiresIn * 1000;
+
+      res.status(200).json({ admin, token, tokenValidity });
     });
   } catch (error) {
     next(error);

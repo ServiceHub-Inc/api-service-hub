@@ -18,7 +18,10 @@ const {
   confirmUserEmail,
   verifySuccess,
   ejsPage,
+  resetPassword,
 } = require("./users.handlers");
+
+const requireAuth = require("../middleware/requireAuth");
 
 module.exports = (app) => {
   app.get("/", (req, res, next) => {
@@ -28,6 +31,9 @@ module.exports = (app) => {
 
   //Login user
   app.post("/login", login);
+
+  //Reset User Pass
+  app.post("/reset-user-password", resetPassword);
 
   //Create a User
   app.post("/create-user", createUser);
@@ -60,6 +66,11 @@ module.exports = (app) => {
 
   //login an Admin
   app.post("/admin/login", loginAdmin);
+
+  //---------------PROTECTED REQUESTS--------------------
+
+  //Using Auth MiddleWare
+  app.use(requireAuth);
 
   //Get all Admins
   app.get("/admins/", getAdmins);
